@@ -1,0 +1,2 @@
+add_executable(Chip8Test Chip8.cpp Dumper.cpp)
+target_link_libraries(Chip8Test PUBLIC Chip8)

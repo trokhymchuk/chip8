@@ -1,4 +1,2 @@
 build/
 CMakeFiles/
-flake.lock
-flake.nix

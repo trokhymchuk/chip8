@@ -26,7 +26,6 @@ void Chip8::load_program(const std::string &program)
   std::copy_if(opcode_stream, opcode_stream_eof, memory.begin(), exceded_memory);
   prg.close();
 }
-
 void Chip8::emulate_cycle()
 {
   proc_timers();
@@ -72,7 +71,37 @@ void Chip8::emulate_cycle()
     case 0:
       assign_reg();
       break;
+    case 1:
+      bitor_reg();
+      break;
+    case 2:
+      bitand_reg();
+      break;
+    case 3:
+      bitxor_reg();
+      break;
+    case 4:
+      sum_reg();
+      break;
+    case 5:
+      substr_reg();
+      break;
+    case 6:
+      rsh_reg();
+      break;
+    case 7:
+      delta_reg();
+      break;
+    case 0xE:
+      lsh_reg();
+      break;
+    default:
+      throw std::runtime_error{"Incorrect opcode " + std::to_string(opcode)};
+      break;
     }
+    break;
+  default:
+    throw std::runtime_error{"Incorrect opcode " + std::to_string(opcode)};
     break;
   }
 }

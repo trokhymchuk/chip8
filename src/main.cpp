@@ -1,10 +1,14 @@
+#include "Chip8.h"
+#include <array>
 #include <iostream>
 #include <thread>
+int main()
+{
+  std::array<unsigned char, 4096> mem;
+  mem[0x200] = 06001 >> 8;
+  mem[0x201] = 06001 & 0x00FF;
+  Chip8 proc{mem};
+  proc.emulate_cycle();
 
-int main() {
-  while (true) {
-    std::cout << "test\n";
-    std::this_thread::sleep_for(std::chrono::milliseconds(1000));
-  }
   return 0;
 }

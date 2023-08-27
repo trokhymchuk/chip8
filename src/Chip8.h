@@ -2,6 +2,7 @@
 #define CHIP_8_H
 #include "../tests/Dumper.h"
 #include <array>
+#include <iostream>
 #include <stdexcept>
 #include <string>
 
@@ -65,13 +66,24 @@ private:
   void set_reg();
   /** 7XNN: add NN to V[X] */
   void add_reg();
-  /** 8XY0: assign V[X] to V[Y] */
+  /** 8XY0: assign V[X] = V[Y] */
   void assign_reg();
   /** 8XY1: V[X] |= V[Y] */
   void bitor_reg();
-  /** 8XY1: V[X] &= V[Y] */
+  /** 8XY2: V[X] &= V[Y] */
   void bitand_reg();
-
+  /** 8XY3 V[X] ^= V[Y] */
+  void bitxor_reg();
+  /** 8XY4 V[X] += V[Y] */
+  void sum_reg();
+  /** 8XY5 V[X] -= V[Y] */
+  void substr_reg();
+  /** 8XY6 V[0xF] = V[X] & 0xf; V[X] >>= 1;  */
+  void rsh_reg();
+  /** 8XY7 V[X] = V[Y] - V[X]; */
+  void delta_reg();
+  /** 8XYE V[0xF] = V[X] & 0xf; V[X] <<= 1;  */
+  void lsh_reg();
   friend unsigned short dump_pc(const Chip8 &proc);
   friend std::array<unsigned char, 4096> const &dump_mem(const Chip8 &proc);
   friend std::array<unsigned char, 16> const &dump_registers(const Chip8 &proc);
@@ -82,7 +94,7 @@ inline void Chip8::subr_ret()
 {
   if (sp == 0)
     throw std::runtime_error{"Returning not from main thread"};
-  pc = stack[--sp];
+  pc = stack.at(--sp);
 }
 inline void Chip8::disp_clear()
 {
@@ -99,22 +111,48 @@ inline void Chip8::call_subr()
 }
 inline void Chip8::skip_addr_equals()
 {
-  if (V[opcode & 0X0F00] == (opcode & 0x00FF))
+  if (V[(opcode & 0x0F00) >> 8] == (opcode & 0x00FF))
     pc += 2;
 }
 inline void Chip8::skip_addr_not_equals()
 {
-  if (V[opcode & 0X0F00] != (opcode & 0x00FF))
+  if (V[(opcode & 0x0F00) >> 8] != (opcode & 0x00FF))
     pc += 2;
 }
 inline void Chip8::skip_reg_equals()
 {
-  if (V[opcode & 0x0F00] == V[opcode & 0x00F0])
+  if (V[(opcode & 0x0F00) >> 8] == V[(opcode & 0x00F0) >> 4])
     pc += 2;
 }
-inline void Chip8::set_reg() { V[opcode & 0x0F00] = static_cast<unsigned char>(opcode & 0x00FF); }
-inline void Chip8::add_reg() { V[opcode & 0x0F00] += static_cast<unsigned char>(opcode & 0x00FF); }
-inline void Chip8::assign_reg() { V[opcode & 0x0F00] = V[opcode & 0x00F0]; }
-inline void Chip8::bitor_reg() { V[opcode & 0x0F00] |= V[opcode & 0x00F0]; }
-inline void Chip8::bitand_reg() { V[opcode & 0x0F00] &= V[opcode & 0x00F0]; }
+inline void Chip8::set_reg() { V[(opcode & 0x0F00) >> 8] = static_cast<unsigned char>(opcode & 0x00FF); }
+inline void Chip8::add_reg() { V[(opcode & 0x0F00) >> 8] += static_cast<unsigned char>(opcode & 0x00FF); }
+inline void Chip8::assign_reg() { V[(opcode & 0x0F00) >> 8] = V[(opcode & 0x00F0) >> 4]; }
+inline void Chip8::bitor_reg() { V[(opcode & 0x0F00) >> 8] |= V[(opcode & 0x00F0) >> 4]; }
+inline void Chip8::bitand_reg() { V[(opcode & 0x0F00) >> 8] &= V[(opcode & 0x00F0) >> 4]; }
+inline void Chip8::bitxor_reg() { V[(opcode & 0x0F00) >> 8] ^= V[(opcode & 0x00F0) >> 4]; }
+inline void Chip8::sum_reg()
+{
+  V[0xF] = (V[(opcode & 0x0F00) >> 8] + V[(opcode & 0x00F0) >> 4]) > 255; // happy debugging (integral promotion)
+  V[(opcode & 0x0F00) >> 8] += V[(opcode & 0x00F0) >> 4];
+}
+inline void Chip8::substr_reg()
+{
+  V[0xF] = V[(opcode & 0x0F00) >> 8] < V[(opcode & 0x00F0) >> 4];
+  V[(opcode & 0x0F00) >> 8] -= V[(opcode & 0x00F0) >> 4];
+}
+inline void Chip8::rsh_reg()
+{
+  V[0xF] = V[(opcode & 0x0F00) >> 8] & 1;
+  V[(opcode & 0x0F00) >> 8] >>= 1;
+}
+inline void Chip8::delta_reg()
+{
+  V[0xF] = V[(opcode & 0x0F00) >> 8] > V[(opcode & 0x00F0) >> 4];
+  V[(opcode & 0x0F00) >> 8] = V[(opcode & 0x00F0) >> 4] - V[(opcode & 0x0F00) >> 8];
+}
+inline void Chip8::lsh_reg()
+{
+  V[0xF] = V[(opcode & 0x0F00) >> 8] & 0x80;
+  V[(opcode & 0x0F00) >> 8] >>= 1;
+}
 #endif // #ifndef CHIP_8_H

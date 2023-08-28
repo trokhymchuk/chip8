@@ -2,7 +2,9 @@
 #define CHIP_8_H
 #include "../tests/Dumper.h"
 #include <array>
+#include <ctime>
 #include <iostream>
+#include <random>
 #include <stdexcept>
 #include <string>
 
@@ -84,11 +86,20 @@ private:
   void delta_reg();
   /** 8XYE V[0xF] = V[X] & 0xf; V[X] <<= 1;  */
   void lsh_reg();
+  /** 9XY0: skip if V[X] != V[Y] */
+  void skip_reg_not_equal();
+  /** ANNN: I = NNN */
+  void set_index();
+  /** BNNN: jump V0 + NNN */
+  void jmp_r0_nnn();
+  /** CXNN: V[X] = random_unsigned_char & NN; **/
+  void rand_reg();
   friend unsigned short dump_pc(const Chip8 &proc);
   friend std::array<unsigned char, 4096> const &dump_mem(const Chip8 &proc);
   friend std::array<unsigned char, 16> const &dump_registers(const Chip8 &proc);
   friend unsigned short dump_sp(Chip8 const &proc);
   friend std::array<unsigned short, 16> const &dump_stack(const Chip8 &proc);
+  friend unsigned short dump_index_reg(const Chip8 &proc);
 };
 inline void Chip8::subr_ret()
 {
@@ -154,5 +165,25 @@ inline void Chip8::lsh_reg()
 {
   V[0xF] = V[(opcode & 0x0F00) >> 8] & 0x80;
   V[(opcode & 0x0F00) >> 8] >>= 1;
+}
+
+inline void Chip8::skip_reg_not_equal()
+{
+  if (V[(opcode & 0x0F00) >> 8] != V[(opcode & 0x00F0) >> 4])
+    pc += 2;
+}
+
+inline void Chip8::set_index() { I = opcode & 0x0FFF; }
+
+inline void Chip8::jmp_r0_nnn() { pc = V[0] + opcode & 0x0FFF; }
+
+inline void Chip8::rand_reg()
+{
+  std::default_random_engine rand;
+#ifndef DEBUG
+  rand.seed(static_cast<std::default_random_engine::result_type>(std::time(nullptr)));
+#endif // #ifndef DEBUG
+  std::uniform_int_distribution<unsigned char> distribution;
+  V[(opcode & 0x0F00) >> 8] = distribution(rand) & (opcode & 0x00FF);
 }
 #endif // #ifndef CHIP_8_H

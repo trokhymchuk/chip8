@@ -100,6 +100,15 @@ void Chip8::emulate_cycle()
       break;
     }
     break;
+  case 0x9000:
+    skip_reg_not_equal();
+    break;
+  case 0xA000:
+    set_index();
+    break;
+  case 0xB000:
+    jmp_r0_nnn();
+    break;
   default:
     throw std::runtime_error{"Incorrect opcode " + std::to_string(opcode)};
     break;
@@ -117,7 +126,7 @@ void Chip8::proc_timers()
     old_time += time_diff;
     if (delay_timer)
       --delay_timer;
-    if (sound_timer == 1)
+ if (sound_timer == 1)
       ; // TODO: BEEP
     if (sound_timer)
       --sound_timer;

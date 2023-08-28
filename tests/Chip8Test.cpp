@@ -289,4 +289,47 @@ TEST_CASE("Opcodes")
     CHECK(dump_registers(proc)[0] == 127);
     CHECK(dump_registers(proc)[0xF] == 1);
   }
+  SUBCASE("9XY0")
+  {
+    SUBCASE("V[X] == V[Y]")
+    {
+      std::array<unsigned char, 4096> mem;
+      mem[0x200] = 0x9000 >> 8;
+      mem[0x201] = 0x900 & 0x00FF;
+      Chip8 proc{mem};
+      proc.emulate_cycle();
+      CHECK(dump_pc(proc) == 0x202);
+    }
+    SUBCASE("V[X] != V[Y]")
+    {
+      std::array<unsigned char, 4096> mem;
+      mem[0x200] = 0x6001 >> 8;
+      mem[0x201] = 0x6001 & 0x00FF;
+      mem[0x202] = 0x9010 >> 8;
+      mem[0x203] = 0x9010 & 0x00FF;
+      Chip8 proc{mem};
+      proc.emulate_cycle();
+      proc.emulate_cycle();
+      CHECK(dump_registers(proc)[0] == 1);
+      CHECK(dump_pc(proc) == 0x206);
+    }
+  }
+  SUBCASE("ANNN")
+  {
+    std::array<unsigned char, 4096> mem;
+    mem[0x200] = 0xA001 >> 8;
+    mem[0x201] = 0xA001 & 0x00FF;
+    Chip8 proc{mem};
+    proc.emulate_cycle();
+    CHECK(dump_index_reg(proc) == 1);
+  }
+  SUBCASE("BNNN")
+  {
+    std::array<unsigned char, 4096> mem;
+    mem[0x200] = 0xB001 >> 8;
+    mem[0x201] = 0xB001 & 0x00FF;
+    Chip8 proc{mem};
+    proc.emulate_cycle();
+    CHECK(dump_pc(proc) == 1);
+  }
 }

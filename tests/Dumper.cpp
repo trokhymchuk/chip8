@@ -7,3 +7,4 @@ std::array<unsigned char, 4096> const &dump_mem(const Chip8 &proc) { return proc
 std::array<unsigned char, 16> const &dump_registers(const Chip8 &proc) { return proc.V; }
 unsigned short dump_sp(Chip8 const &proc) { return proc.sp; }
 std::array<unsigned short, 16> const &dump_stack(const Chip8 &proc) { return proc.stack; }
+unsigned short dump_index_reg(const Chip8 &proc) { return proc.I; }
